@@ -1,0 +1,30 @@
+# -*- coding: utf-8 -*-
+{
+  'name': 'Real Estate',
+  'version': '19.0.1.0.0',
+  'summary': 'Manage real estate property sales',
+  'description': """
+Real Estate
+===========
+
+This module provides basic functionality to manage property listings and sales.
+
+Features
+--------
+- Create and manage properties
+- Track offers and sales
+- Manage property owners and agents
+
+This is a minimal example module intended for learning and local testing with Odoo.
+""",
+  'author': 'Alex Martinez Juan',
+  'website': '',
+  'category': 'Sales',
+  # Señala que se trata de una aplicación
+  'application': True,
+  'installable': True,
+  # Especifica la lista de módulos requeridos para su correcto funcionamiento
+  'depends': ['base'],
+  # Incluye los ficheros relativos a políticas de seguridad y vistas
+  'data': [],
+}
