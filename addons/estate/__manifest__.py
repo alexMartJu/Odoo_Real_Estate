@@ -26,5 +26,7 @@ This is a minimal example module intended for learning and local testing with Od
   # Especifica la lista de módulos requeridos para su correcto funcionamiento
   'depends': ['base'],
   # Incluye los ficheros relativos a políticas de seguridad y vistas
-  'data': [],
+  'data': [
+      'security/ir.model.access.csv',
+  ],
 }
