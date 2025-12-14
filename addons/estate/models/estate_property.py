@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from dateutil.relativedelta import relativedelta
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class EstateProperty(models.Model):
@@ -35,6 +35,9 @@ class EstateProperty(models.Model):
         string='Garden Orientation'
     )
 
+    total_area = fields.Integer(string='Total Area (sqm)', compute='_compute_total_area')
+    best_price = fields.Float(string='Best Offer', compute='_compute_best_price')
+
     active = fields.Boolean(string="Active", default=True)
     state = fields.Selection(
         [
@@ -56,3 +59,29 @@ class EstateProperty(models.Model):
     salesperson_id = fields.Many2one('res.users', string='Salesperson', default=lambda self: self.env.user)
     tag_ids = fields.Many2many('estate.property.tag', string='Tags')
     offer_ids = fields.One2many('estate.property.offer', 'property_id', string='Offers')
+
+    # Compute Methods
+    # Calculate total area as sum of living area and garden area
+    @api.depends('living_area', 'garden_area')
+    def _compute_total_area(self):
+        for record in self:
+            record.total_area = record.living_area + record.garden_area
+
+    # Calculate best price from related offers
+    @api.depends('offer_ids.price')
+    def _compute_best_price(self):
+        for record in self:
+            if record.offer_ids:
+                record.best_price = max(record.offer_ids.mapped("price"))
+            else:
+                record.best_price = 0.0
+
+    # Onchange Methods
+    @api.onchange('garden')
+    def _onchange_garden(self):
+        if self.garden:
+            self.garden_area = 10
+            self.garden_orientation = 'north'
+        else:
+            self.garden_area = 0
+            self.garden_orientation = False
