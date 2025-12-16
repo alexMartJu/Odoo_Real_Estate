@@ -2,7 +2,8 @@
 
 from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 
 class EstateProperty(models.Model):
@@ -54,6 +55,10 @@ class EstateProperty(models.Model):
         default='new'
     )
 
+    # Constraints
+    _check_expected_price = models.Constraint('CHECK(expected_price > 0)', 'The expected price must be strictly positive.')
+    _check_selling_price_sql = models.Constraint('CHECK(selling_price >= 0)', 'The selling price cannot be negative.')
+
     # Relations
     property_type_id = fields.Many2one('estate.property.type', string='Property Type')
     buyer_id = fields.Many2one('res.partner', string='Buyer', copy=False)
@@ -101,3 +106,13 @@ class EstateProperty(models.Model):
                 raise UserError('A cancelled property cannot be set as sold.')
             record.state = 'sold'
         return True
+
+    # Constraints
+    @api.constrains('selling_price', 'expected_price')
+    def _check_selling_price(self):
+        for record in self:
+            # Only validate if selling_price is not zero (it's zero until an offer is accepted)
+            if not float_is_zero(record.selling_price, precision_digits=2):
+                # The selling price cannot be lower than 90% of the expected price
+                if float_compare(record.selling_price, record.expected_price * 0.9, precision_digits=2) < 0:
+                    raise ValidationError('The selling price cannot be lower than 90% of the expected price.')
