@@ -6,6 +6,7 @@
         <field name="name">Properties</field>
         <field name="res_model">estate.property</field>
         <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_available': True}</field>
     </record>
 
     <!-- List view -->
@@ -13,17 +14,21 @@
         <field name="name">estate.property.list</field>
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
-            <list string="Properties">
+            <list string="Properties" 
+                decoration-success="state == 'offer_received' or state == 'offer_accepted'"
+                decoration-bf="state == 'offer_accepted'"
+                decoration-muted="state == 'sold'">
                 <field name="property_type_id"/>
                 <field name="name"/>
                 <field name="postcode"/>
-                <field name="tag_ids" widget="many2many_tags"/>
+                <field name="tag_ids" widget="many2many_tags" options="{'color_field':'color'}"/>
                 <field name="bedrooms"/>
                 <field name="living_area"/>
                 <field name="total_area"/>
                 <field name="expected_price"/>
                 <field name="selling_price"/>
-                <field name="date_availability"/>
+                <field name="date_availability" optional="hide"/>
+                <field name="state" column_invisible="1"/>
             </list>
         </field>
     </record>
@@ -35,24 +40,25 @@
         <field name="arch" type="xml">
             <form string="Property">
                 <header>
-                    <button name="action_cancel" type="object" string="Cancel" class="btn-secondary"/>
-                    <button name="action_sold" type="object" string="Sold" class="btn-primary"/>
+                    <button name="action_cancel" type="object" string="Cancel" class="btn-secondary" invisible="state in ('sold', 'cancellled')"/>
+                    <button name="action_sold" type="object" string="Sold" class="btn-primary" invisible="state in ('sold', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="new,offer_received,offer_accepted,sold"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <h1>
                             <field name="name"/>
                         </h1>
-                        <field name="tag_ids" widget="many2many_tags"/>
+                        <field name="tag_ids" widget="many2many_tags" options="{'color_field':'color'}" nolabel="1"/>
                     </div>
 
-                    <group>
                         <group>
-                            <field name="state"/>
-                            <field name="property_type_id"/>
-                            <field name="postcode"/>
-                            <field name="date_availability"/>
-                        </group>
+                            <group>
+                                <!-- Prevent creation/opening of property type from here -->
+                                <field name="property_type_id" options="{'no_create': True, 'no_open': True}"/>
+                                <field name="postcode"/>
+                                <field name="date_availability"/>
+                            </group>
                         <group>
                             <field name="expected_price"/>
                             <field name="best_price" readonly="1"/>
@@ -75,17 +81,8 @@
                             </group>
                         </page>
                         <page string="Offers">
-                            <field name="offer_ids">
-                                <list string="Property Offers" editable="bottom">
-                                    <field name="price"/>
-                                    <field name="partner_id"/>
-                                    <field name="validity"/>
-                                    <field name="date_deadline"/>
-                                    <button name="action_accept" string="Accept" type="object" icon="fa-check"/>
-                                    <button name="action_refuse" string="Refuse" type="object" icon="fa-times"/>
-                                    <field name="status"/>
-                                </list>
-                            </field>
+                            <!-- Prevent modification of offers when property is sold/cancelled -->
+                            <field name="offer_ids" readonly="state in ('offer_accepted', 'sold', 'cancelled')"/>
                         </page>
                         <page string="Other Info">
                             <group>
@@ -110,7 +107,8 @@
                 <field name="postcode"/>
                 <field name="expected_price"/>
                 <field name="bedrooms"/>
-                <field name="living_area"/>
+                <!-- Filter for living area greater than or equal to a value -->
+                <field name="living_area" filter_domain="[('living_area', '>=', self)]"/>
                 <field name="facades"/>
                 <separator/>
                 <filter string="Available" name="available" domain="['|', ('state', '=', 'new'), ('state', '=', 'offer_received')]"/>

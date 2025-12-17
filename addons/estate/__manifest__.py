@@ -28,10 +28,10 @@ This is a minimal example module intended for learning and local testing with Od
   # Incluye los ficheros relativos a políticas de seguridad y vistas
   'data': [
     'security/ir.model.access.csv',
-    'views/estate_property_views.xml',
+    'views/estate_property_offer_views.xml',
     'views/estate_property_type_views.xml',
     'views/estate_property_tag_views.xml',
-    'views/estate_property_offer_views.xml',
+    'views/estate_property_views.xml',
     'views/estate_menus.xml',
   ],
 }
