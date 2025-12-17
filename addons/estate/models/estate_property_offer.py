@@ -2,7 +2,7 @@
 
 from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class EstatePropertyOffer(models.Model):
@@ -24,6 +24,38 @@ class EstatePropertyOffer(models.Model):
 
     # Constraints
     _check_offer_price = models.Constraint('CHECK(price > 0)', 'The offer price must be strictly positive.')
+
+    # Override create to enforce business rules and update property state
+    @api.model_create_multi
+    def create(self, vals_list):
+        Property = self.env['estate.property']
+
+        # Pre-validate incoming offers (vals_list contains dicts with fields)
+        for vals in vals_list:
+            prop_id = vals.get('property_id')
+            price = vals.get('price')
+            # Only validate when both property_id and price are present
+            if prop_id and price is not None:
+                # Use browse(id) to obtain the estate.property record (no extra search)
+                prop = Property.browse(prop_id)
+                # If the property exists and already has offers, get the maximum
+                # existing offer price and compare it with the new price.
+                if prop and prop.offer_ids:
+                    max_offer = max(prop.offer_ids.mapped('price'))
+                    # Business rule: do not allow creating an offer with a price
+                    # lower than the current maximum offer for the same property.
+                    if price < max_offer:
+                        raise ValidationError(
+                            'The offer price (%.2f) cannot be lower than the existing maximum offer (%.2f).' % (price, max_offer)
+                        )
+
+        # Create offers (call super after validation)
+        offers = super().create(vals_list)
+        # Update property state to 'offer_received' when previously 'new'
+        for offer in offers:
+            if offer.property_id and offer.property_id.state == 'new':
+                offer.property_id.state = 'offer_received'
+        return offers
 
     @api.depends('create_date', 'validity')
     def _compute_date_deadline(self):
