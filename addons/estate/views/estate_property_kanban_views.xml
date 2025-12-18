@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="estate_property_view_kanban" model="ir.ui.view">
+        <field name="name">estate.property.kanban</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="property_type_id" records_draggable="false">
+
+                <!-- Fields declared for QWeb -->
+                <field name="state"/>
+                <field name="property_type_id"/>
+                <field name="expected_price"/>
+                <field name="best_price"/>
+                <field name="selling_price"/>
+                <field name="tag_ids"/>
+
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card">
+                            <div class="oe_kanban_content">
+
+                                <!-- Name -->
+                                <div class="mb-1">
+                                    <strong><field name="name"/></strong>
+                                </div>
+
+                                <!-- Expected Price -->
+                                <div class="mt-1">
+                                    <span class="text-muted">
+                                        Expected Price: <field name="expected_price"/>
+                                    </span>
+                                </div>
+
+                                <!-- Best Offer -->
+                                <div t-if="record.state.raw_value == 'offer_received' or record.state.raw_value == 'offer_accepted'">
+                                     <span class="text-muted">
+                                        Best Offer: <field name="best_price"/>
+                                    </span>
+                                </div>
+
+                                <!-- Selling Price -->
+                                <div t-if="record.state.raw_value == 'offer_accepted' or record.state.raw_value == 'sold'">
+                                    <span class="text-muted">
+                                        Selling Price: <field name="selling_price"/>
+                                    </span>
+                                </div>
+
+                                <!-- Tags -->
+                                <div class="mt-1">
+                                    <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                                </div>
+
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+</odoo>
+
